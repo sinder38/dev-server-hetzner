@@ -8,7 +8,6 @@ HOST=$2
 echo "[wait-for-ssh] Waiting for SSH on $USER@$HOST..."
 for i in $(seq 1 30); do
     if ssh -o StrictHostKeyChecking=no \
-           -o UserKnownHostsFile=/dev/null \
            -o ConnectTimeout=5 \
            "$USER@$HOST" true 2>/dev/null; then
         echo "[wait-for-ssh] SSH is up."

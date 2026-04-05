@@ -1,24 +1,16 @@
 #!/usr/bin/env bash
+# Usage: restore.sh [snapshot_id]
+# If snapshot_id is omitted, looks up the latest one.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/.env"
 
-# Get the latest snapshot by description
-SNAPSHOT_ID=$(hcloud image list \
-    --type snapshot \
-    -o json \
-  | python3 -c "
-import sys, json
-imgs = json.load(sys.stdin)
-matching = [i for i in imgs if '$SNAPSHOT_LABEL' in (i.get('description') or '')]
-if not matching:
-    print('ERROR: No snapshot found matching: $SNAPSHOT_LABEL', file=sys.stderr)
-    exit(1)
-latest = sorted(matching, key=lambda x: x['created'], reverse=True)[0]
-print(latest['id'])
-")
+SNAPSHOT_ID="${1:-}"
+if [[ -z "$SNAPSHOT_ID" ]]; then
+    SNAPSHOT_ID=$(bash "$SCRIPT_DIR/_latest-snapshot.sh" "$SNAPSHOT_LABEL")
+fi
 
 echo "[restore] Creating server '$SERVER_NAME' from snapshot $SNAPSHOT_ID..."
 hcloud server create \
@@ -34,15 +26,10 @@ echo "[restore] Server IP: $SERVER_IP"
 # Clear any stale known_hosts entry
 ssh-keygen -R "$SERVER_IP" 2>/dev/null || true
 
-# Wait for SSH as sinder (snapshot has the user configured)
+# Update ~/.ssh/config before waiting so the wait loop picks up the right identity
+bash "$SCRIPT_DIR/_update-ssh-config.sh" hetzner-dev "$SERVER_IP" sinder "$SSH_IDENTITY_FILE"
+
+# Wait for SSH as sinder (snapshot already has the user configured)
 bash "$SCRIPT_DIR/_wait-for-ssh.sh" sinder "$SERVER_IP"
 
-echo ""
-echo "[restore] Done! Update your ~/.ssh/config hetzner-dev HostName to: $SERVER_IP"
-echo ""
-echo "  Host hetzner-dev"
-echo "      HostName $SERVER_IP"
-echo "      User sinder"
-echo "      IdentityFile ~/.ssh/id_ed25519"
-echo ""
-echo "Then connect with: ssh hetzner-dev"
+echo "[restore] Done. Connect with: ssh hetzner-dev"

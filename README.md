@@ -33,8 +33,8 @@ snapshot-and-destroy.sh  # Save + stop (end of day)
 
 | Script | Description |
 |--------|-------------|
-| `scripts/provision.sh` | Create server. Restores from snapshot if one exists, otherwise creates fresh and runs full bootstrap (~15 min). |
-| `scripts/snapshot-and-destroy.sh` | Snapshot the running server then delete it. Keeps the 2 most recent snapshots. |
+| `scripts/provision.sh` | Create server. Restores from snapshot if one exists, otherwise creates fresh and runs full bootstrap (~8 min). |
+| `scripts/snapshot-and-destroy.sh` | Snapshot the running server then delete it. Keeps `SNAPSHOTS_TO_KEEP` most recent snapshots. |
 | `scripts/restore.sh` | Create server from latest snapshot (called by provision.sh automatically). |
 | `scripts/destroy.sh` | Delete server without snapshotting (prompts for confirmation). |
 | `scripts/bootstrap.sh` | Run Ansible playbook against inventory/hosts.ini (called by provision.sh on fresh installs). |

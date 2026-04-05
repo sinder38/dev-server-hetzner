@@ -5,23 +5,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/.env"
 
-# Find the latest snapshot matching our label
-SNAPSHOT_ID=$(hcloud image list \
-    --type snapshot \
-    -o json \
-  | python3 -c "
-import sys, json
-imgs = json.load(sys.stdin)
-matching = [i for i in imgs if '$SNAPSHOT_LABEL' in (i.get('description') or '')]
-if not matching:
-    exit(1)
-latest = sorted(matching, key=lambda x: x['created'], reverse=True)[0]
-print(latest['id'])
-" 2>/dev/null || true)
+SNAPSHOT_ID=$(bash "$SCRIPT_DIR/_latest-snapshot.sh" "$SNAPSHOT_LABEL" 2>/dev/null || true)
 
 if [[ -n "$SNAPSHOT_ID" ]]; then
     echo "[provision] Found snapshot $SNAPSHOT_ID — restoring..."
-    bash "$SCRIPT_DIR/restore.sh"
+    bash "$SCRIPT_DIR/restore.sh" "$SNAPSHOT_ID"
 else
     echo "[provision] No snapshot found — creating fresh server..."
 
@@ -36,7 +24,7 @@ else
     SERVER_IP=$(hcloud server ip "$SERVER_NAME")
     echo "[provision] Server IP: $SERVER_IP"
 
-    # Write inventory
+    # Write inventory for Ansible
     cat > "$ROOT_DIR/inventory/hosts.ini" <<EOF
 [dev_server]
 $SERVER_NAME ansible_host=$SERVER_IP ansible_user=root
@@ -48,16 +36,11 @@ EOF
     # Wait for SSH as root
     bash "$SCRIPT_DIR/_wait-for-ssh.sh" root "$SERVER_IP"
 
-    # Run bootstrap
+    # Run full Ansible bootstrap
     bash "$SCRIPT_DIR/bootstrap.sh"
 
-    echo ""
-    echo "[provision] Done! Add this to ~/.ssh/config to connect:"
-    echo ""
-    echo "  Host hetzner-dev"
-    echo "      HostName $SERVER_IP"
-    echo "      User sinder"
-    echo "      IdentityFile ~/.ssh/id_ed25519"
-    echo ""
-    echo "Then connect with: ssh hetzner-dev"
+    # Update ~/.ssh/config
+    bash "$SCRIPT_DIR/_update-ssh-config.sh" hetzner-dev "$SERVER_IP" sinder "$SSH_IDENTITY_FILE"
+
+    echo "[provision] Done. Connect with: ssh hetzner-dev"
 fi

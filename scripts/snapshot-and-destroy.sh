@@ -19,24 +19,17 @@ hcloud server delete "$SERVER_NAME"
 
 echo "[snapshot-and-destroy] Server deleted."
 
-# Delete old snapshots, keep only the 2 most recent
-OLD_SNAPSHOTS=$(hcloud image list \
-    --type snapshot \
-    -o json \
-  | python3 -c "
-import sys, json
-imgs = json.load(sys.stdin)
-matching = sorted(
-    [i for i in imgs if '$SNAPSHOT_LABEL' in (i.get('description') or '')],
-    key=lambda x: x['created'],
-    reverse=True
-)
-for i in matching[2:]:
-    print(i['id'])
-")
+# Delete old snapshots beyond the configured limit
+OLD_SNAPSHOTS=$(bash "$SCRIPT_DIR/_latest-snapshot.sh" "$SNAPSHOT_LABEL" --all-but-keep "${SNAPSHOTS_TO_KEEP:-1}" || true)
 
 for ID in $OLD_SNAPSHOTS; do
-    echo "[snapshot-and-destroy] Deleting old snapshot $ID..."
+    # Safety check: only delete if the description still matches our label
+    DESC=$(hcloud image describe "$ID" -o json | python3 -c "import sys,json; print(json.load(sys.stdin).get('description',''))")
+    if [[ ! "$DESC" =~ ^${SNAPSHOT_LABEL}-[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{6}Z$ ]]; then
+        echo "[snapshot-and-destroy] SKIP: snapshot $ID description '$DESC' does not match label '$SNAPSHOT_LABEL', refusing to delete."
+        continue
+    fi
+    echo "[snapshot-and-destroy] Deleting old snapshot $ID ('$DESC')..."
     hcloud image delete "$ID"
 done
 
