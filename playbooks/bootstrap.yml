@@ -1,0 +1,34 @@
+---
+# Phase 1: System setup as root
+- name: System setup
+  hosts: dev_server
+  remote_user: root
+  become: false
+  gather_facts: true
+  roles:
+    - role: base
+    - role: user
+
+# Phase 2: User-space dev tools as sinder (no become — installs into ~sinder)
+- name: User-space dev tools
+  hosts: dev_server
+  remote_user: sinder
+  become: false
+  gather_facts: true
+  roles:
+    - role: zsh
+    - role: rust
+    - role: node
+    - role: python
+    - role: podman
+    - role: github_cli
+    - role: claude_code
+
+# Phase 3: System services as sinder + become
+- name: System services
+  hosts: dev_server
+  remote_user: sinder
+  become: true
+  gather_facts: false
+  roles:
+    - role: postgres

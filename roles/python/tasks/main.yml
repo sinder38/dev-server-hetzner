@@ -1,0 +1,42 @@
+---
+- name: Install pyenv build dependencies
+  ansible.builtin.dnf:
+    name:
+      - bzip2
+      - bzip2-devel
+      - libffi-devel
+      - openssl-devel
+      - readline-devel
+      - sqlite-devel
+      - xz
+      - xz-devel
+      - zlib-devel
+      - tk-devel
+    state: present
+  become: true
+
+- name: Install pyenv
+  ansible.builtin.shell: |
+    curl https://pyenv.run | bash
+  args:
+    creates: /home/sinder/.pyenv/bin/pyenv
+  environment:
+    HOME: /home/sinder
+
+- name: Install Python 3.13 via pyenv
+  ansible.builtin.shell: |
+    /home/sinder/.pyenv/bin/pyenv install 3.13 --skip-existing
+    /home/sinder/.pyenv/bin/pyenv global 3.13
+  environment:
+    HOME: /home/sinder
+    PYENV_ROOT: /home/sinder/.pyenv
+  changed_when: false
+
+- name: Install pipx
+  ansible.builtin.shell: |
+    /home/sinder/.pyenv/shims/pip install --user pipx
+  environment:
+    HOME: /home/sinder
+    PYENV_ROOT: /home/sinder/.pyenv
+    PATH: "/home/sinder/.pyenv/shims:/home/sinder/.pyenv/bin:/usr/bin:/bin"
+  changed_when: false

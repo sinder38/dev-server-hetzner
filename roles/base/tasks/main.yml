@@ -1,0 +1,63 @@
+---
+- name: Update all packages
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+
+- name: Install base packages
+  ansible.builtin.dnf:
+    name:
+      - curl
+      - wget
+      - git
+      - git-lfs
+      - vim
+      - tmux
+      - htop
+      - unzip
+      - tar
+      - gcc
+      - gcc-c++
+      - make
+      - cmake
+      - openssl-devel
+      - libffi-devel
+      - readline-devel
+      - sqlite-devel
+      - bzip2
+      - bzip2-devel
+      - zlib-devel
+      - xz
+      - xz-devel
+      - tk-devel
+      - firewalld
+      - fail2ban
+      - zsh
+    state: present
+
+- name: Enable and start firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Allow SSH through firewall
+  ansible.posix.firewalld:
+    service: ssh
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Disable root password login (key-only)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin prohibit-password'
+    backup: true
+  notify: restart sshd
+
+- name: Set SELinux to permissive
+  ansible.posix.selinux:
+    policy: targeted
+    state: permissive

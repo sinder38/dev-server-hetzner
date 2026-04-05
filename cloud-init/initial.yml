@@ -1,0 +1,10 @@
+#cloud-config
+hostname: dev-server
+fqdn: dev-server.local
+manage_etc_hosts: true
+
+packages:
+  - python3
+
+package_update: false
+package_upgrade: false

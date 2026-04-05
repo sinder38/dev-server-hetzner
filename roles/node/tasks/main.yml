@@ -1,0 +1,38 @@
+---
+- name: Ensure fnm install directory exists
+  ansible.builtin.file:
+    path: /home/sinder/.local/share/fnm
+    state: directory
+    owner: sinder
+    group: sinder
+    mode: '0755'
+
+- name: Install fnm
+  ansible.builtin.shell: |
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- \
+      --install-dir /home/sinder/.local/share/fnm \
+      --skip-shell
+  args:
+    creates: /home/sinder/.local/share/fnm/fnm
+  environment:
+    HOME: /home/sinder
+
+- name: Install latest LTS Node.js
+  ansible.builtin.shell: |
+    /home/sinder/.local/share/fnm/fnm install --lts
+    /home/sinder/.local/share/fnm/fnm default lts-latest
+  environment:
+    HOME: /home/sinder
+    FNM_DIR: /home/sinder/.fnm
+  changed_when: false
+
+- name: Install pnpm globally
+  ansible.builtin.shell: |
+    eval "$(/home/sinder/.local/share/fnm/fnm env --fnm-dir /home/sinder/.fnm)"
+    npm install -g pnpm
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: /home/sinder
+    FNM_DIR: /home/sinder/.fnm
+  changed_when: false

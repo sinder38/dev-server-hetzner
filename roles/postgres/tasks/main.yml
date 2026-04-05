@@ -1,0 +1,38 @@
+---
+- name: Install PostgreSQL
+  ansible.builtin.dnf:
+    name:
+      - postgresql-server
+      - postgresql-contrib
+      - postgresql
+    state: present
+
+- name: Check if PostgreSQL is initialized
+  ansible.builtin.stat:
+    path: /var/lib/pgsql/data/PG_VERSION
+  register: pg_initialized
+
+- name: Initialize PostgreSQL cluster
+  ansible.builtin.command:
+    cmd: postgresql-setup --initdb
+  when: not pg_initialized.stat.exists
+
+- name: Enable and start PostgreSQL
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: Create sinder PostgreSQL superuser
+  ansible.builtin.shell: |
+    psql -U postgres -c "CREATE USER sinder CREATEDB SUPERUSER;" 2>/dev/null || true
+  become_user: postgres
+  changed_when: false
+
+- name: Allow local trust auth (dev convenience)
+  ansible.builtin.lineinfile:
+    path: /var/lib/pgsql/data/pg_hba.conf
+    regexp: '^local\s+all\s+all\s+peer'
+    line: 'local   all             all                                     trust'
+    backup: true
+  notify: restart postgresql

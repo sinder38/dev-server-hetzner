@@ -1,0 +1,36 @@
+---
+- name: Create sinder group
+  ansible.builtin.group:
+    name: sinder
+    state: present
+
+- name: Create sinder user
+  ansible.builtin.user:
+    name: sinder
+    group: sinder
+    groups: wheel
+    shell: /bin/zsh
+    create_home: true
+    home: /home/sinder
+    state: present
+
+- name: Allow wheel group passwordless sudo
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/wheel-nopasswd
+    content: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+    mode: '0440'
+
+- name: Fetch SSH public key from Hetzner
+  ansible.builtin.command:
+    cmd: >
+      hcloud ssh-key describe personal-laptop-2026 -o json
+  delegate_to: localhost
+  register: hcloud_key_json
+  changed_when: false
+
+- name: Add SSH authorized key for sinder
+  ansible.posix.authorized_key:
+    user: sinder
+    state: present
+    key: "{{ (hcloud_key_json.stdout | from_json).public_key }}"

@@ -1,0 +1,11 @@
+---
+- name: Install Claude Code CLI via npm
+  ansible.builtin.shell: |
+    eval "$(/home/sinder/.local/share/fnm/fnm env --fnm-dir /home/sinder/.fnm)"
+    npm install -g @anthropic-ai/claude-code
+  args:
+    executable: /bin/bash
+  environment:
+    HOME: /home/sinder
+    FNM_DIR: /home/sinder/.fnm
+  changed_when: false

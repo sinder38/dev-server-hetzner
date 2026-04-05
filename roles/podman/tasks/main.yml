@@ -1,0 +1,50 @@
+---
+- name: Install Podman and rootless dependencies
+  ansible.builtin.dnf:
+    name:
+      - podman
+      - podman-compose
+      - slirp4netns
+      - fuse-overlayfs
+      - shadow-utils
+    state: present
+  become: true
+
+- name: Enable linger for sinder (persist user services after logout)
+  ansible.builtin.command:
+    cmd: loginctl enable-linger sinder
+  become: true
+  changed_when: false
+
+- name: Create Podman config directory for sinder
+  ansible.builtin.file:
+    path: /home/sinder/.config/containers
+    state: directory
+    owner: sinder
+    group: sinder
+    mode: '0700'
+
+- name: Configure fuse-overlayfs storage driver
+  ansible.builtin.copy:
+    dest: /home/sinder/.config/containers/storage.conf
+    owner: sinder
+    group: sinder
+    mode: '0644'
+    content: |
+      [storage]
+      driver = "overlay"
+
+      [storage.options]
+      mount_program = "/usr/bin/fuse-overlayfs"
+
+- name: Ensure subuid entry exists for sinder
+  ansible.builtin.shell: |
+    grep -q "^sinder:" /etc/subuid || usermod --add-subuids 100000-165535 sinder
+  become: true
+  changed_when: false
+
+- name: Ensure subgid entry exists for sinder
+  ansible.builtin.shell: |
+    grep -q "^sinder:" /etc/subgid || usermod --add-subgids 100000-165535 sinder
+  become: true
+  changed_when: false

@@ -1,0 +1,32 @@
+---
+- name: Check if rustup is installed
+  ansible.builtin.stat:
+    path: /home/sinder/.cargo/bin/rustup
+  register: rustup_stat
+
+- name: Install rustup
+  ansible.builtin.shell: |
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+  args:
+    creates: /home/sinder/.cargo/bin/rustup
+  environment:
+    HOME: /home/sinder
+    RUSTUP_HOME: /home/sinder/.rustup
+    CARGO_HOME: /home/sinder/.cargo
+  when: not rustup_stat.stat.exists
+
+- name: Install stable toolchain
+  ansible.builtin.shell: /home/sinder/.cargo/bin/rustup toolchain install stable
+  environment:
+    HOME: /home/sinder
+    RUSTUP_HOME: /home/sinder/.rustup
+    CARGO_HOME: /home/sinder/.cargo
+  changed_when: false
+
+- name: Set stable as default
+  ansible.builtin.shell: /home/sinder/.cargo/bin/rustup default stable
+  environment:
+    HOME: /home/sinder
+    RUSTUP_HOME: /home/sinder/.rustup
+    CARGO_HOME: /home/sinder/.cargo
+  changed_when: false
