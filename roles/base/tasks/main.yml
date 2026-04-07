@@ -4,6 +4,10 @@
     name: "*"
     state: latest
     update_cache: true
+  retries: 5
+  delay: 10
+  register: result
+  until: result is succeeded
 
 - name: Install base packages
   ansible.builtin.dnf:
@@ -35,6 +39,10 @@
       - fail2ban
       - zsh
     state: present
+  retries: 5
+  delay: 10
+  register: result
+  until: result is succeeded
 
 - name: Enable and start firewalld
   ansible.builtin.systemd:

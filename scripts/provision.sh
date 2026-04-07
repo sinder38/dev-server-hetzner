@@ -34,7 +34,7 @@ ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
     # Wait for SSH as root
-    bash "$SCRIPT_DIR/_wait-for-ssh.sh" root "$SERVER_IP"
+    bash "$SCRIPT_DIR/_wait-for-ssh.sh" root "$SERVER_IP" "$SSH_IDENTITY_FILE"
 
     # Run full Ansible bootstrap
     bash "$SCRIPT_DIR/bootstrap.sh"
