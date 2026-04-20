@@ -13,6 +13,8 @@
     HOME: /home/sinder
     RUSTUP_HOME: /home/sinder/.rustup
     CARGO_HOME: /home/sinder/.cargo
+  become: true
+  become_user: sinder
   when: not rustup_stat.stat.exists
 
 - name: Install stable toolchain
@@ -21,6 +23,8 @@
     HOME: /home/sinder
     RUSTUP_HOME: /home/sinder/.rustup
     CARGO_HOME: /home/sinder/.cargo
+  become: true
+  become_user: sinder
   changed_when: false
 
 - name: Set stable as default
@@ -29,4 +33,6 @@
     HOME: /home/sinder
     RUSTUP_HOME: /home/sinder/.rustup
     CARGO_HOME: /home/sinder/.cargo
+  become: true
+  become_user: sinder
   changed_when: false
