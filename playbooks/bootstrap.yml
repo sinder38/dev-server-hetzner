@@ -24,11 +24,3 @@
     - role: github_cli
     - role: claude_code
 
-# Phase 3: System services as sinder + become
-- name: System services
-  hosts: dev_server
-  remote_user: sinder
-  become: true
-  gather_facts: false
-  roles:
-    - role: postgres

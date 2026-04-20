@@ -36,3 +36,41 @@
   become: true
   become_user: sinder
   changed_when: false
+
+- name: Install sqlx-cli
+  ansible.builtin.shell: /home/sinder/.cargo/bin/cargo install sqlx-cli --no-default-features --features rustls,postgres
+  args:
+    creates: /home/sinder/.cargo/bin/sqlx
+  environment:
+    HOME: /home/sinder
+    RUSTUP_HOME: /home/sinder/.rustup
+    CARGO_HOME: /home/sinder/.cargo
+
+- name: Install mask task runner
+  ansible.builtin.shell: /home/sinder/.cargo/bin/cargo install mask
+  args:
+    creates: /home/sinder/.cargo/bin/mask
+  environment:
+    HOME: /home/sinder
+    RUSTUP_HOME: /home/sinder/.rustup
+    CARGO_HOME: /home/sinder/.cargo
+
+- name: Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: /home/sinder/.local/bin
+    state: directory
+    mode: '0755'
+
+- name: Install dbmate
+  ansible.builtin.shell: |
+    curl -fsSL -o /home/sinder/.local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+    chmod +x /home/sinder/.local/bin/dbmate
+  args:
+    creates: /home/sinder/.local/bin/dbmate
+
+- name: Install zellij
+  ansible.builtin.shell: |
+    curl -fsSL https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz \
+      | tar -xz -C /home/sinder/.local/bin zellij
+  args:
+    creates: /home/sinder/.local/bin/zellij

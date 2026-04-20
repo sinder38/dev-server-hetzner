@@ -38,6 +38,7 @@
       - firewalld
       - fail2ban
       - zsh
+      - pipewire-alsa
     state: present
   retries: 5
   delay: 10
