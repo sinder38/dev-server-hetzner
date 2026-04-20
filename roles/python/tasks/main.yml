@@ -2,6 +2,7 @@
 - name: Install pyenv build dependencies
   ansible.builtin.dnf:
     name:
+      - uv
       - bzip2
       - bzip2-devel
       - libffi-devel
