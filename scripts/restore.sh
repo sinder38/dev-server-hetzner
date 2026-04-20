@@ -30,6 +30,6 @@ ssh-keygen -R "$SERVER_IP" 2>/dev/null || true
 bash "$SCRIPT_DIR/_update-ssh-config.sh" hetzner-dev "$SERVER_IP" sinder "$SSH_IDENTITY_FILE"
 
 # Wait for SSH as sinder (snapshot already has the user configured)
-bash "$SCRIPT_DIR/_wait-for-ssh.sh" sinder "$SERVER_IP"
+bash "$SCRIPT_DIR/_wait-for-ssh.sh" sinder "$SERVER_IP" "$SSH_IDENTITY_FILE"
 
 echo "[restore] Done. Connect with: ssh hetzner-dev"
