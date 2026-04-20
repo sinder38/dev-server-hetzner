@@ -12,10 +12,18 @@ echo "[snapshot-and-destroy] Creating snapshot '$DESCRIPTION' from '$SERVER_NAME
 hcloud server create-image \
     --type snapshot \
     --description "$DESCRIPTION" \
-    "$SERVER_NAME"
+    "$SERVER_NAME" &
 
-echo "[snapshot-and-destroy] Snapshot created. Deleting server '$SERVER_NAME'..."
+SNAPSHOT_PID=$!
+
+# Wait just in case
+sleep 10
+
+# Delete server while snapshot is in progress (it works)
+echo "[snapshot-and-destroy] Deleting server '$SERVER_NAME'..."
 hcloud server delete "$SERVER_NAME"
+
+wait $SNAPSHOT_PID
 
 echo "[snapshot-and-destroy] Server deleted."
 
