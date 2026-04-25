@@ -52,26 +52,6 @@ Host hetzner-dev
 
 After a restore, update the `HostName` to the new IP printed by `restore.sh`.
 
-## Dev environment
-
-Installed tools:
-- **Rust** — rustup, stable toolchain
-- **Node.js** — fnm + LTS, pnpm
-- **Python** — pyenv + 3.13, pipx
-- **PostgreSQL** — server + client, sinder superuser, trust auth locally
-- **Podman** — rootless, fuse-overlayfs
-- **GitHub CLI** — `gh`
-- **Claude Code** — `claude`
-- **Zsh** — Oh-My-Zsh, robbyrussell theme
-
-## Re-bootstrapping
-
-The bootstrap playbook is idempotent. If you need to add or update tools while the server is running:
-
 ```sh
 bash scripts/bootstrap.sh
 ```
-
-## Snapshot costs
-
-Hetzner charges ~€0.012/GB/month for snapshots. A cpx62 (640 GB disk) snapshot typically compresses to the size of data actually written. Keep at most 2 snapshots (the script auto-deletes older ones).

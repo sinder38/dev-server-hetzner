@@ -5,6 +5,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 source "$ROOT_DIR/.env"
 
+EXISTING_IP=$(hcloud server ip "$SERVER_NAME" 2>/dev/null || true)
+
+if [[ -n "$EXISTING_IP" ]]; then
+    echo "[provision] Server '$SERVER_NAME' already running at $EXISTING_IP — skipping."
+    bash "$SCRIPT_DIR/_update-ssh-config.sh" hetzner-dev "$EXISTING_IP" sinder "$SSH_IDENTITY_FILE"
+    echo "[provision] Connect with: ssh hetzner-dev"
+    exit 0
+fi
+
 SNAPSHOT_ID=$(bash "$SCRIPT_DIR/_latest-snapshot.sh" "$SNAPSHOT_LABEL" 2>/dev/null || true)
 
 if [[ -n "$SNAPSHOT_ID" ]]; then
