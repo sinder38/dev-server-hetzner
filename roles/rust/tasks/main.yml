@@ -1,9 +1,4 @@
 ---
-- name: Check if rustup is installed
-  ansible.builtin.stat:
-    path: /home/sinder/.cargo/bin/rustup
-  register: rustup_stat
-
 - name: Install rustup
   ansible.builtin.shell: |
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
@@ -15,7 +10,6 @@
     CARGO_HOME: /home/sinder/.cargo
   become: true
   become_user: sinder
-  when: not rustup_stat.stat.exists
 
 - name: Install stable toolchain
   ansible.builtin.shell: /home/sinder/.cargo/bin/rustup toolchain install stable
@@ -25,7 +19,8 @@
     CARGO_HOME: /home/sinder/.cargo
   become: true
   become_user: sinder
-  changed_when: false
+  register: rustup_toolchain
+  changed_when: "'stable' not in rustup_toolchain.stdout"
 
 - name: Set stable as default
   ansible.builtin.shell: /home/sinder/.cargo/bin/rustup default stable
@@ -35,7 +30,8 @@
     CARGO_HOME: /home/sinder/.cargo
   become: true
   become_user: sinder
-  changed_when: false
+  register: rustup_default
+  changed_when: "'default' not in rustup_default.stdout"
 
 - name: Install sqlx-cli
   ansible.builtin.shell: /home/sinder/.cargo/bin/cargo install sqlx-cli --no-default-features --features rustls,postgres
@@ -45,6 +41,8 @@
     HOME: /home/sinder
     RUSTUP_HOME: /home/sinder/.rustup
     CARGO_HOME: /home/sinder/.cargo
+  become: true
+  become_user: sinder
 
 - name: Install mask task runner
   ansible.builtin.shell: /home/sinder/.cargo/bin/cargo install mask
@@ -54,19 +52,24 @@
     HOME: /home/sinder
     RUSTUP_HOME: /home/sinder/.rustup
     CARGO_HOME: /home/sinder/.cargo
+  become: true
+  become_user: sinder
 
 - name: Ensure ~/.local/bin exists
   ansible.builtin.file:
     path: /home/sinder/.local/bin
     state: directory
     mode: '0755'
+    owner: sinder
+    group: sinder
 
 - name: Install dbmate
-  ansible.builtin.shell: |
-    curl -fsSL -o /home/sinder/.local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-    chmod +x /home/sinder/.local/bin/dbmate
-  args:
-    creates: /home/sinder/.local/bin/dbmate
+  ansible.builtin.get_url:
+    url: https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
+    dest: /home/sinder/.local/bin/dbmate
+    mode: '0755'
+    owner: sinder
+    group: sinder
 
 - name: Install zellij
   ansible.builtin.shell: |
